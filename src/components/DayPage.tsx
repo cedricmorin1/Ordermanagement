@@ -1,28 +1,25 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package, Users, TrendingUp, List, BarChart3 } from 'lucide-react';
-import { Order } from '../types';
+import { ArrowLeft, Users, Package, TrendingUp, List, BarChart3 } from 'lucide-react';
+import { Order, DeliveryDay, WeekInfo } from '../types';
+import { getDateForDayInWeek } from '../utils/dateUtils';
 import OrderCard from './OrderCard';
-import AddOrderModal from './AddOrderModal';
 import ProductSummary from './ProductSummary';
 
 interface DayPageProps {
-  day: string;
+  day: DeliveryDay;
+  selectedWeek: WeekInfo;
   orders: Order[];
-  onBack: () => void;
-  onAddOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
+  onAddOrder: (orderData: Omit<Order, 'id' | 'createdAt'>) => void;
   onUpdateOrder: (orderId: string, updates: Partial<Order>) => void;
   onDeleteOrder: (orderId: string) => void;
 }
 
-const DayPage: React.FC<DayPageProps> = ({
-  day,
-  orders,
-  onBack,
-  onAddOrder,
-  onUpdateOrder,
-  onDeleteOrder,
-}) => {
+const DayPage: React.FC<DayPageProps> = ({ day, selectedWeek, orders, onAddOrder, onUpdateOrder, onDeleteOrder }) => {
   const [showProductSummary, setShowProductSummary] = useState(false);
+
+  const onBack = () => {
+    window.history.back();
+  };
 
   const dayLabels: { [key: string]: string } = {
     mercredi: 'Mercredi',
@@ -31,7 +28,10 @@ const DayPage: React.FC<DayPageProps> = ({
     samedi: 'Samedi',
   };
 
-  const dayOrders = orders.filter(order => order.deliveryDay === day);
+  const targetDate = getDateForDayInWeek(selectedWeek.startDate, day);
+  const dayOrders = orders.filter(order => 
+    order.deliveryDay === day && order.deliveryDate === targetDate
+  );
 
 
   // Compter le nombre total de produits (pas les quantités)
@@ -83,22 +83,24 @@ const DayPage: React.FC<DayPageProps> = ({
           </div>
         </div>
         
-        <button
-          onClick={() => setShowProductSummary(!showProductSummary)}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          {showProductSummary ? (
-            <>
-              <List className="w-5 h-5 mr-2" />
-              Voir commandes
-            </>
-          ) : (
-            <>
-              <BarChart3 className="w-5 h-5 mr-2" />
-              Récap produits
-            </>
-          )}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setShowProductSummary(!showProductSummary)}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            {showProductSummary ? (
+              <>
+                <List className="w-5 h-5 mr-2" />
+                Voir commandes
+              </>
+            ) : (
+              <>
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Résumé produits
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Statistiques du jour */}
@@ -179,7 +181,7 @@ const DayPage: React.FC<DayPageProps> = ({
           onUpdateProductStatus={handleUpdateProductStatus}
         />
       ) : (
-        <>
+        <div className="space-y-6">
           {dayOrders.length === 0 ? (
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -202,8 +204,9 @@ const DayPage: React.FC<DayPageProps> = ({
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
+
     </div>
   );
 };

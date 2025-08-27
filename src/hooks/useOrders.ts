@@ -33,13 +33,21 @@ export const useOrders = () => {
   }, [orders, loading]);
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    console.log('useOrders.addOrder called with:', orderData);
+    
     const newOrder: Order = {
       ...orderData,
       id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date().toISOString(),
     };
     
-    setOrders(prevOrders => [...prevOrders, newOrder]);
+    console.log('Creating new order:', newOrder);
+    
+    setOrders(prevOrders => {
+      const updatedOrders = [...prevOrders, newOrder];
+      console.log('Orders updated, new count:', updatedOrders.length);
+      return updatedOrders;
+    });
   };
 
   const updateOrder = (orderId: string, updates: Partial<Order>) => {

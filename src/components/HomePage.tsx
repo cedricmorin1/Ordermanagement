@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { Calendar, Package, Users, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
-import { Order } from '../types';
+import { Order, WeekInfo } from '../types';
+import { getDateForDayInWeek } from '../utils/dateUtils';
 import AddOrderModal from './AddOrderModal';
 
 interface HomePageProps {
   orders: Order[];
+  selectedWeek: WeekInfo;
   onNavigateToDay: (day: string) => void;
   onAddOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder }) => {
+const HomePage: React.FC<HomePageProps> = ({ orders, selectedWeek, onNavigateToDay, onAddOrder }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getOrdersByDay = (day: string) => {
-    return orders.filter(order => order.deliveryDay === day);
+    const targetDate = getDateForDayInWeek(selectedWeek.startDate, day as any);
+    return orders.filter(order => 
+      order.deliveryDay === day && order.deliveryDate === targetDate
+    );
   };
 
   const getTotalProductsByDay = (day: string) => {
@@ -60,15 +65,23 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
     { key: 'samedi', label: 'Samedi', color: 'bg-red-500' },
   ];
 
-  const totalOrders = orders.length;
-  const totalCustomers = new Set(orders.map(order => order.customerName.toLowerCase())).size;
+  // Filter orders for selected week
+  const weekOrders = orders.filter(order => {
+    const orderDate = new Date(order.deliveryDate);
+    const weekStart = new Date(selectedWeek.startDate);
+    const weekEnd = new Date(selectedWeek.endDate);
+    return orderDate >= weekStart && orderDate <= weekEnd;
+  });
+
+  const totalOrders = weekOrders.length;
+  const totalCustomers = new Set(weekOrders.map(order => order.customerName.toLowerCase())).size;
   const uniqueProducts = new Set();
-  orders.forEach(order => {
+  weekOrders.forEach(order => {
     order.products.forEach(product => {
       uniqueProducts.add(product.name.toLowerCase());
     });
   });
-  const totalProductsCount = orders.reduce((total, order) => {
+  const totalProductsCount = weekOrders.reduce((total, order) => {
     return total + order.products.length;
   }, 0);
 
@@ -205,6 +218,7 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddOrder={onAddOrder}
+        selectedWeek={selectedWeek}
       />
     </div>
   );
