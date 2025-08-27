@@ -33,31 +33,25 @@ const DayPage: React.FC<DayPageProps> = ({
 
   const dayOrders = orders.filter(order => order.deliveryDay === day);
 
-  const uniqueProducts = new Set();
-  dayOrders.forEach(order => {
-    order.products.forEach(product => {
-      uniqueProducts.add(product.name.toLowerCase());
-    });
-  });
 
-  const totalProducts = uniqueProducts.size;
-
-  const totalRequiredQuantity = dayOrders.reduce((total, order) => {
-    return total + order.products.reduce((orderTotal, product) => {
-      return orderTotal + product.quantity;
-    }, 0);
+  // Compter le nombre total de produits (pas les quantités)
+  const totalProductsCount = dayOrders.reduce((total, order) => {
+    return total + order.products.length;
   }, 0);
 
-  const completedProductsQuantity = dayOrders.reduce((total, order) => {
-    return total + order.products.reduce((orderTotal, product) => {
-      return orderTotal + (product.produced || 0);
-    }, 0);
+  // Compter le nombre de produits complètement fabriqués
+  const completedProductsCount = dayOrders.reduce((total, order) => {
+    return total + order.products.filter(product => 
+      (product.produced || 0) >= product.quantity
+    ).length;
   }, 0);
 
-  const remainingProducts = Math.max(0, totalRequiredQuantity - completedProductsQuantity);
 
-  const progressPercentage = totalRequiredQuantity > 0 
-    ? Math.round((completedProductsQuantity / totalRequiredQuantity) * 100)
+  const remainingProducts = totalProductsCount - completedProductsCount;
+
+
+  const progressPercentage = totalProductsCount > 0 
+    ? Math.round((completedProductsCount / totalProductsCount) * 100)
     : 0;
 
   const totalCustomers = new Set(dayOrders.map(order => order.customerName.toLowerCase())).size;
@@ -140,7 +134,7 @@ const DayPage: React.FC<DayPageProps> = ({
             </div>
             <div className="ml-4">
               <h3 className="text-sm font-medium text-gray-600">Produits total</h3>
-              <p className="text-2xl font-bold text-yellow-600">{totalProducts}</p>
+              <p className="text-2xl font-bold text-yellow-600">{totalProductsCount}</p>
             </div>
           </div>
         </div>
@@ -173,8 +167,8 @@ const DayPage: React.FC<DayPageProps> = ({
           />
         </div>
         <div className="flex justify-between text-sm text-gray-600 mt-2">
-          <span>{completedProductsQuantity} fabriqués</span>
-          <span>{Math.max(0, remainingProducts)} restants</span>
+          <span>{completedProductsCount} produits terminés</span>
+          <span>{remainingProducts} produits restants</span>
         </div>
       </div>
 

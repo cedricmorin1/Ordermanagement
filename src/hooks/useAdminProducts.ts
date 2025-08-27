@@ -17,6 +17,7 @@ const DEFAULT_PRODUCTS: Omit<AdminProduct, 'id' | 'createdAt'>[] = [
 
 export const useAdminProducts = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Charger les données depuis localStorage
   useEffect(() => {
@@ -46,19 +47,21 @@ export const useAdminProducts = () => {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des produits admin:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Sauvegarder les données dans localStorage
+  // Sauvegarder les données dans localStorage à chaque changement
   useEffect(() => {
-    if (products.length > 0) {
+    if (!loading && products.length > 0) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
       } catch (error) {
         console.error('Erreur lors de la sauvegarde des produits admin:', error);
       }
     }
-  }, [products]);
+  }, [products, loading]);
 
   const addProduct = (productData: Omit<AdminProduct, 'id' | 'createdAt'>) => {
     const newProduct: AdminProduct = {
@@ -89,5 +92,6 @@ export const useAdminProducts = () => {
     addProduct,
     updateProduct,
     deleteProduct,
+    loading,
   };
 };

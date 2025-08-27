@@ -195,7 +195,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
 
             <div className="space-y-3">
               {products.map((product, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                <div key={`product-${index}`} className="bg-gray-50 p-4 rounded-lg">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -203,15 +203,27 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
                       </label>
                       <div className="relative">
                        <select
-                         value={product.name}
+                         value={product.name || ""}
                          onChange={(e) => {
                            const selectedProductName = e.target.value;
-                           updateProduct(index, 'name', selectedProductName);
+                           const newProducts = [...products];
+                           newProducts[index] = {
+                             ...newProducts[index],
+                             name: selectedProductName
+                           };
+                           
                            // Auto-select unit based on admin products
-                           const adminProduct = adminProducts.find(p => p.name === selectedProductName);
-                           if (adminProduct) {
-                             updateProduct(index, 'unit', adminProduct.defaultUnit);
+                           if (selectedProductName) {
+                             const adminProduct = adminProducts.find(p => p.name === selectedProductName);
+                             if (adminProduct) {
+                               newProducts[index] = {
+                                 ...newProducts[index],
+                                 unit: adminProduct.defaultUnit
+                               };
+                             }
                            }
+                           
+                           setProducts(newProducts);
                          }}
                          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 ${
                            errors[`product_${index}_name`] ? 'border-red-300' : 'border-gray-300'

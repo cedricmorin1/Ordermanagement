@@ -116,23 +116,6 @@ const ProductSummary: React.FC<ProductSummaryProps> = ({ orders, onUpdateProduct
     });
   };
 
-  const handleSetCustomQuantity = (productSummary: ProductSummaryItem, targetQuantity: number) => {
-    let remainingToSet = targetQuantity;
-    
-    // Réinitialiser tout d'abord
-    productSummary.orders.forEach(order => {
-      onUpdateProductStatus(order.orderId, order.productId, 0);
-    });
-    
-    // Puis distribuer la quantité demandée
-    productSummary.orders.forEach(order => {
-      if (remainingToSet <= 0) return;
-      
-      const toSet = Math.min(remainingToSet, order.quantity);
-      onUpdateProductStatus(order.orderId, order.productId, toSet);
-      remainingToSet -= toSet;
-    });
-  };
 
   if (productSummary.length === 0) {
     return (
@@ -180,27 +163,6 @@ const ProductSummary: React.FC<ProductSummaryProps> = ({ orders, onUpdateProduct
                 <div className="flex items-center space-x-3">
                   <span className="text-sm font-medium text-gray-600">{progress}%</span>
                   
-                  {/* Input pour quantité personnalisée */}
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max={product.totalQuantity}
-                      step={product.unit === 'kg' ? '0.1' : '1'}
-                      placeholder="Qté"
-                      className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" 
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const value = parseFloat((e.target as HTMLInputElement).value);
-                          if (!isNaN(value) && value >= 0) {
-                            handleSetCustomQuantity(product, value);
-                            (e.target as HTMLInputElement).value = '';
-                          }
-                        }
-                      }}
-                    />
-                    <span className="text-xs text-gray-500">{product.unit}</span>
-                  </div>
                   
                   <div className="flex space-x-1">
                     <button

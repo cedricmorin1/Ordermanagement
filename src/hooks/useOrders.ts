@@ -5,6 +5,7 @@ const STORAGE_KEY = 'butchery_orders';
 
 export const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Charger les données depuis localStorage
   useEffect(() => {
@@ -15,17 +16,21 @@ export const useOrders = () => {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Sauvegarder les données dans localStorage
+  // Sauvegarder les données dans localStorage à chaque changement
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde des données:', error);
+    if (!loading) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+      } catch (error) {
+        console.error('Erreur lors de la sauvegarde des données:', error);
+      }
     }
-  }, [orders]);
+  }, [orders, loading]);
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
     const newOrder: Order = {
@@ -56,6 +61,7 @@ export const useOrders = () => {
     addOrder,
     updateOrder,
     deleteOrder,
+    loading,
   };
 };
 

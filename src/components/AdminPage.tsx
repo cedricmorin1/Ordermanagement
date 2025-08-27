@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Plus, Edit2, Trash2, Save, X, Upload } from 'lucide-react';
 import { AdminProduct } from '../types';
 import { useAdminProducts } from '../hooks/useAdminProducts';
 
@@ -13,6 +13,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newProduct, setNewProduct] = useState({ name: '', defaultUnit: 'kg' });
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
 
   const units = ['kg', 'g', 'pièce(s)', 'tranche(s)'];
 
@@ -45,6 +47,58 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
     setEditingProduct(null);
   };
 
+  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      // Skip header line if it exists
+      const dataLines = lines.slice(1);
+      let importedCount = 0;
+      let skippedCount = 0;
+      const totalLines = dataLines.length;
+      
+      dataLines.forEach(line => {
+        const [name, unit] = line.split(',').map(item => item.trim());
+        if (name && unit) {
+          // Check if product already exists (case insensitive)
+          const existingProduct = products.find(p => 
+            p.name.toLowerCase() === name.toLowerCase()
+          );
+          
+          if (!existingProduct) {
+            addProduct({ name, defaultUnit: unit });
+            importedCount++;
+          } else {
+            skippedCount++;
+          }
+        }
+      });
+      
+      // Show import message with details
+      let message = `${importedCount} produit(s) sur ${totalLines} ont été importés avec succès.`;
+      if (skippedCount > 0) {
+        message += ` ${skippedCount} produit(s) ignoré(s) (déjà existant(s)).`;
+      }
+      setImportMessage(message);
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        setImportMessage(null);
+      }, 5000);
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -61,14 +115,57 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
           </div>
         </div>
         
-        <button
-          onClick={() => setIsAdding(true)}
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors shadow-sm"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Nouveau produit
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Upload className="w-5 h-5 mr-2" />
+            Importer CSV
+          </button>
+          <button
+            onClick={() => setIsAdding(true)}
+            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Nouveau produit
+          </button>
+        </div>
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleImportCSV}
+          className="hidden"
+        />
       </div>
+
+      {/* Message d'import */}
+      {importMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{importMessage}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <div className="-mx-1.5 -my-1.5">
+                <button
+                  onClick={() => setImportMessage(null)}
+                  className="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Formulaire d'ajout */}
       {isAdding && (

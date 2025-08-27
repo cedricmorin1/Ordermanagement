@@ -19,19 +19,17 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
 
   const getTotalProductsByDay = (day: string) => {
     const dayOrders = getOrdersByDay(day);
-    const uniqueProducts = new Set();
-    dayOrders.forEach(order => {
-      order.products.forEach(product => {
-        uniqueProducts.add(product.name.toLowerCase());
-      });
-    });
-    return uniqueProducts.size;
+    return dayOrders.reduce((total, order) => {
+      return total + order.products.length;
+    }, 0);
   };
 
   const getCompletedProductsByDay = (day: string) => {
     const dayOrders = getOrdersByDay(day);
     return dayOrders.reduce((total, order) => {
-      return total + order.products.reduce((orderTotal, product) => orderTotal + product.produced, 0);
+      return total + order.products.filter(product => 
+        (product.produced || 0) >= product.quantity
+      ).length;
     }, 0);
   };
 
@@ -68,7 +66,9 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
       uniqueProducts.add(product.name.toLowerCase());
     });
   });
-  const totalProducts = uniqueProducts.size;
+  const totalProductsCount = orders.reduce((total, order) => {
+    return total + order.products.length;
+  }, 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -119,7 +119,7 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900">Produits total</h3>
-              <p className="text-3xl font-bold text-yellow-600">{totalProducts}</p>
+              <p className="text-3xl font-bold text-yellow-600">{totalProductsCount}</p>
             </div>
           </div>
         </div>

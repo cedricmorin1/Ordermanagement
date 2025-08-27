@@ -10,6 +10,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  customerName String
+  customerPhone String
+  deliveryDay String
+  notes       String?
+  createdAt   DateTime @default(now())
+  products    Product[]
+}
+
+model Product {
+  id       String @id @default(cuid())
+  name     String
+  quantity Float
+  unit     String
+  produced Float  @default(0)
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model AdminProduct {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  defaultUnit String
+  createdAt   DateTime @default(now())
 }
