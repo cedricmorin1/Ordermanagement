@@ -35,13 +35,15 @@ const HomePage: React.FC<HomePageProps> = ({ orders, onNavigateToDay, onAddOrder
 
   const getProgressPercentage = (day: string) => {
     const dayOrders = getOrdersByDay(day);
-    const totalQuantity = dayOrders.reduce((total, order) => {
-      return total + order.products.reduce((orderTotal, product) => orderTotal + product.quantity, 0);
+    const totalProducts = dayOrders.reduce((total, order) => {
+      return total + order.products.length;
     }, 0);
-    const completedQuantity = dayOrders.reduce((total, order) => {
-      return total + order.products.reduce((orderTotal, product) => orderTotal + product.produced, 0);
+    const completedProducts = dayOrders.reduce((total, order) => {
+      return total + order.products.filter(product => 
+        (product.produced || 0) >= product.quantity
+      ).length;
     }, 0);
-    return totalQuantity > 0 ? Math.round((completedQuantity / totalQuantity) * 100) : 0;
+    return totalProducts > 0 ? Math.round((completedProducts / totalProducts) * 100) : 0;
   };
 
   const getCompletedOrdersByDay = (day: string) => {
