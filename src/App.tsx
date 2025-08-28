@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Navigation from './components/Navigation';
 import HomePage from './components/HomePage';
-import DayPage from './components/DayPage';
+import CommandesPage from './components/CommandesPage';
 import AdminPage from './components/AdminPage';
 import WeekSelector from './components/WeekSelector';
 import { useOrders } from './hooks/useOrders';
-import { DeliveryDay, WeekInfo } from './types';
+import { WeekInfo } from './types';
 import { getNext3Weeks } from './utils/dateUtils';
 
 function App() {
@@ -20,19 +20,13 @@ function App() {
   const renderCurrentPage = () => {
     if (currentPage === 'home') {
       return (
-        <>
-          <WeekSelector 
-            weeks={getNext3Weeks()}
-            selectedWeek={selectedWeek}
-            onWeekChange={setSelectedWeek}
-          />
-          <HomePage 
-            orders={orders}
-            selectedWeek={selectedWeek}
-            onNavigateToDay={handlePageChange}
-            onAddOrder={addOrder}
-          />
-        </>
+        <HomePage 
+          orders={orders}
+          selectedWeek={selectedWeek}
+          onNavigateToDay={handlePageChange}
+          onAddOrder={addOrder}
+          onWeekChange={setSelectedWeek}
+        />
       );
     }
 
@@ -44,42 +38,26 @@ function App() {
       );
     }
 
-    const days: DeliveryDay[] = ['mercredi', 'jeudi', 'vendredi', 'samedi'];
-    
-    if (days.includes(currentPage as DeliveryDay)) {
+    if (currentPage === 'commandes') {
       return (
-        <>
-          <WeekSelector 
-            weeks={getNext3Weeks()}
-            selectedWeek={selectedWeek}
-            onWeekChange={setSelectedWeek}
-          />
-          <DayPage
-            day={currentPage as DeliveryDay}
-            selectedWeek={selectedWeek}
-            orders={orders}
-            onAddOrder={addOrder}
-            onUpdateOrder={updateOrder}
-            onDeleteOrder={deleteOrder}
-          />
-        </>
+        <CommandesPage
+          selectedWeek={selectedWeek}
+          orders={orders}
+          onUpdateOrder={updateOrder}
+          onDeleteOrder={deleteOrder}
+          onBack={() => handlePageChange('home')}
+        />
       );
     }
 
     return (
-      <>
-        <WeekSelector 
-          weeks={getNext3Weeks()}
-          selectedWeek={selectedWeek}
-          onWeekChange={setSelectedWeek}
-        />
-        <HomePage 
-          orders={orders}
-          selectedWeek={selectedWeek}
-          onNavigateToDay={handlePageChange}
-          onAddOrder={addOrder}
-        />
-      </>
+      <HomePage 
+        orders={orders}
+        selectedWeek={selectedWeek}
+        onNavigateToDay={handlePageChange}
+        onAddOrder={addOrder}
+        onWeekChange={setSelectedWeek}
+      />
     );
   };
 

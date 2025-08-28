@@ -1,29 +1,24 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
-import { Order, Product, DeliveryDay, WeekInfo } from '../types';
-import { getDateForDayInWeek } from '../utils/dateUtils';
+import { Order, Product } from '../types';
 import { useAdminProducts } from '../hooks/useAdminProducts';
 
 interface AddOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
-  defaultDay?: DeliveryDay;
-  selectedWeek: WeekInfo;
 }
 
 const AddOrderModal: React.FC<AddOrderModalProps> = ({ 
   isOpen, 
   onClose, 
-  onAddOrder,
-  defaultDay,
-  selectedWeek 
+  onAddOrder
 }) => {
   const { products: adminProducts } = useAdminProducts();
   const [orderData, setOrderData] = useState({
     customerName: '',
     customerPhone: '',
-    deliveryDay: defaultDay || 'mercredi' as DeliveryDay,
+    deliveryDate: '',
     notes: ''
   });
 
@@ -39,7 +34,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
     setOrderData({
       customerName: '',
       customerPhone: '',
-      deliveryDay: defaultDay || 'mercredi',
+      deliveryDate: '',
       notes: ''
     });
     setProducts([{ name: '', quantity: 1, unit: 'kg', produced: 0 }]);
@@ -79,6 +74,10 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
       newErrors.customerPhone = 'Le téléphone est requis';
     }
 
+    if (!orderData.deliveryDate) {
+      newErrors.deliveryDate = 'La date de livraison est requise';
+    }
+
     products.forEach((product, index) => {
       if (!product.name.trim()) {
         newErrors[`product_${index}_name`] = 'Le nom du produit est requis';
@@ -92,44 +91,53 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form submitted - START');
-    console.log('orderData:', orderData);
-    console.log('products:', products);
-    
     if (!validateForm()) {
-      console.log('Validation failed:', errors);
       return;
     }
 
-    console.log('Validation passed');
-
-    const deliveryDate = getDateForDayInWeek(selectedWeek.startDate, orderData.deliveryDay);
-    console.log('Calculated deliveryDate:', deliveryDate);
+    // Determine deliveryDay from the selected date
+    const date = new Date(orderData.deliveryDate);
+    const dayOfWeek = date.getDay();
+    let deliveryDay: 'mercredi' | 'jeudi' | 'vendredi' | 'samedi';
+    
+    switch (dayOfWeek) {
+      case 3: // Wednesday
+        deliveryDay = 'mercredi';
+        break;
+      case 4: // Thursday
+        deliveryDay = 'jeudi';
+        break;
+      case 5: // Friday
+        deliveryDay = 'vendredi';
+        break;
+      case 6: // Saturday
+        deliveryDay = 'samedi';
+        break;
+      default:
+        deliveryDay = 'mercredi'; // Default fallback
+    }
     
     const newOrder: Omit<Order, 'id' | 'createdAt'> = {
       customerName: orderData.customerName,
       customerPhone: orderData.customerPhone,
-      deliveryDay: orderData.deliveryDay,
-      deliveryDate,
+      deliveryDay,
+      deliveryDate: orderData.deliveryDate,
       notes: orderData.notes,
       products: products.map((product, index) => ({
         ...product,
         id: `product_${Date.now()}_${index}`,
       })),
     };
-
-    console.log('About to call onAddOrder with:', newOrder);
     
     try {
-      onAddOrder(newOrder);
-      console.log('onAddOrder called successfully');
+      await onAddOrder(newOrder);
       handleClose();
-      console.log('Modal closed');
     } catch (error) {
       console.error('Error calling onAddOrder:', error);
+      alert('Erreur lors de la création de la commande');
     }
   };
 
@@ -194,18 +202,19 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Jour de livraison
+              Date de livraison *
             </label>
-            <select
-              value={orderData.deliveryDay}
-              onChange={(e) => setOrderData({ ...orderData, deliveryDay: e.target.value as DeliveryDay })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="mercredi">Mercredi</option>
-              <option value="jeudi">Jeudi</option>
-              <option value="vendredi">Vendredi</option>
-              <option value="samedi">Samedi</option>
-            </select>
+            <input
+              type="date"
+              value={orderData.deliveryDate}
+              onChange={(e) => setOrderData({ ...orderData, deliveryDate: e.target.value })}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                errors.deliveryDate ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.deliveryDate && (
+              <p className="text-red-600 text-sm mt-1">{errors.deliveryDate}</p>
+            )}
           </div>
 
           <div>
@@ -344,59 +353,7 @@ const AddOrderModal: React.FC<AddOrderModalProps> = ({
               Annuler
             </button>
             <button
-              type="button"
-              onClick={() => {
-                console.log('Button clicked - direct handler!');
-                console.log('Current orderData:', orderData);
-                console.log('Current products:', products);
-                
-                // Validation manuelle
-                if (!orderData.customerName.trim()) {
-                  console.log('Missing customer name');
-                  return;
-                }
-                if (!orderData.customerPhone.trim()) {
-                  console.log('Missing customer phone');
-                  return;
-                }
-                if (products.length === 0 || !products[0].name.trim()) {
-                  console.log('Missing product name');
-                  return;
-                }
-                
-                console.log('All validation passed, calling onAddOrder...');
-                
-                try {
-                  console.log('selectedWeek:', selectedWeek);
-                  
-                  if (!selectedWeek || !selectedWeek.startDate) {
-                    console.error('selectedWeek is undefined or missing startDate');
-                    return;
-                  }
-                  
-                  const deliveryDate = getDateForDayInWeek(selectedWeek.startDate, orderData.deliveryDay);
-                  console.log('Calculated deliveryDate:', deliveryDate);
-                  
-                  const newOrder = {
-                    customerName: orderData.customerName,
-                    customerPhone: orderData.customerPhone,
-                    deliveryDay: orderData.deliveryDay,
-                    deliveryDate,
-                    notes: orderData.notes,
-                    products: products.map((product, index) => ({
-                      ...product,
-                      id: `product_${Date.now()}_${index}`,
-                    })),
-                  };
-                  
-                  console.log('Calling onAddOrder with:', newOrder);
-                  onAddOrder(newOrder);
-                  console.log('onAddOrder called, closing modal...');
-                  handleClose();
-                } catch (error) {
-                  console.error('Error in order creation:', error);
-                }
-              }}
+              type="submit"
               className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
               <Save className="w-4 h-4 mr-2" />

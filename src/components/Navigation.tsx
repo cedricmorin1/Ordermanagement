@@ -7,13 +7,10 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
-  const days = [
+  const pages = [
     { key: 'home', label: 'Accueil', icon: Home },
-    { key: 'admin', label: 'Administration', icon: Home },
-    { key: 'mercredi', label: 'Mercredi', icon: Calendar },
-    { key: 'jeudi', label: 'Jeudi', icon: Calendar },
-    { key: 'vendredi', label: 'Vendredi', icon: Calendar },
-    { key: 'samedi', label: 'Samedi', icon: Calendar },
+    { key: 'commandes', label: 'Commandes', icon: Calendar },
+    { key: 'admin', label: 'Gestionnaire', icon: Home },
   ];
 
   return (
@@ -25,7 +22,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
               <h1 className="text-xl font-bold text-red-600">Boucherie - Gestion Commandes</h1>
             </div>
             <div className="flex space-x-4">
-              {days.map(({ key, label, icon: Icon }) => (
+              {pages.map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
                   onClick={() => onPageChange(key)}

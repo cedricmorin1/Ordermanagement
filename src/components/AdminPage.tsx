@@ -18,12 +18,17 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
 
   const units = ['kg', 'g', 'pièce(s)', 'tranche(s)'];
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.name.trim()) return;
     
-    addProduct(newProduct);
-    setNewProduct({ name: '', defaultUnit: 'kg' });
-    setIsAdding(false);
+    try {
+      await addProduct(newProduct);
+      setNewProduct({ name: '', defaultUnit: 'kg' });
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout:', error);
+      alert('Erreur lors de l\'ajout du produit');
+    }
   };
 
   const handleEditProduct = (product: AdminProduct) => {
@@ -31,15 +36,20 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
     setEditingProduct({ ...product });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingProduct || !editingProduct.name.trim()) return;
     
-    updateProduct(editingProduct.id, {
-      name: editingProduct.name,
-      defaultUnit: editingProduct.defaultUnit,
-    });
-    setEditingId(null);
-    setEditingProduct(null);
+    try {
+      await updateProduct(editingProduct.id, {
+        name: editingProduct.name,
+        defaultUnit: editingProduct.defaultUnit,
+      });
+      setEditingId(null);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Erreur lors de la modification:', error);
+      alert('Erreur lors de la modification du produit');
+    }
   };
 
   const handleCancelEdit = () => {
@@ -296,7 +306,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBack }) => {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => deleteProduct(product.id)}
+                      onClick={async () => {
+                        try {
+                          await deleteProduct(product.id);
+                        } catch (error) {
+                          console.error('Erreur lors de la suppression:', error);
+                          alert('Erreur lors de la suppression du produit');
+                        }
+                      }}
                       className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-full transition-colors"
                       title="Supprimer"
                     >

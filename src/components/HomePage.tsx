@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Package, Users, TrendingUp } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { Order, WeekInfo } from '../types';
-import { getDateForDayInWeek } from '../utils/dateUtils';
+import { getDateForDayInWeek, getNext3Weeks } from '../utils/dateUtils';
 import AddOrderModal from './AddOrderModal';
 
 interface HomePageProps {
@@ -10,9 +10,10 @@ interface HomePageProps {
   selectedWeek: WeekInfo;
   onNavigateToDay: (day: string) => void;
   onAddOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
+  onWeekChange: (week: WeekInfo) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ orders, selectedWeek, onNavigateToDay, onAddOrder }) => {
+const HomePage: React.FC<HomePageProps> = ({ orders, selectedWeek, onNavigateToDay, onAddOrder, onWeekChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getOrdersByDay = (day: string) => {
@@ -99,6 +100,67 @@ const HomePage: React.FC<HomePageProps> = ({ orders, selectedWeek, onNavigateToD
           <Plus className="w-5 h-5 mr-2" />
           Nouvelle commande
         </button>
+      </div>
+
+      {/* Week Selector */}
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Calendar className="w-6 h-6 text-blue-600 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Sélectionner une semaine</h3>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => {
+                const newStartDate = new Date(selectedWeek.startDate);
+                newStartDate.setDate(newStartDate.getDate() - 7);
+                const newEndDate = new Date(selectedWeek.endDate);
+                newEndDate.setDate(newEndDate.getDate() - 7);
+                
+                const newWeek: WeekInfo = {
+                  weekNumber: selectedWeek.weekNumber - 1,
+                  startDate: newStartDate.toISOString().split('T')[0],
+                  endDate: newEndDate.toISOString().split('T')[0],
+                  label: `Semaine ${selectedWeek.weekNumber - 1}`
+                };
+                
+                onWeekChange(newWeek);
+              }}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              ←
+            </button>
+            
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-700">Semaine sélectionnée</p>
+              <p className="text-lg font-semibold text-blue-600">{selectedWeek.label}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(selectedWeek.startDate).toLocaleDateString('fr-FR')} - {new Date(selectedWeek.endDate).toLocaleDateString('fr-FR')}
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                const newStartDate = new Date(selectedWeek.startDate);
+                newStartDate.setDate(newStartDate.getDate() + 7);
+                const newEndDate = new Date(selectedWeek.endDate);
+                newEndDate.setDate(newEndDate.getDate() + 7);
+                
+                const newWeek: WeekInfo = {
+                  weekNumber: selectedWeek.weekNumber + 1,
+                  startDate: newStartDate.toISOString().split('T')[0],
+                  endDate: newEndDate.toISOString().split('T')[0],
+                  label: `Semaine ${selectedWeek.weekNumber + 1}`
+                };
+                
+                onWeekChange(newWeek);
+              }}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              →
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Statistiques globales */}
@@ -218,7 +280,6 @@ const HomePage: React.FC<HomePageProps> = ({ orders, selectedWeek, onNavigateToD
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddOrder={onAddOrder}
-        selectedWeek={selectedWeek}
       />
     </div>
   );

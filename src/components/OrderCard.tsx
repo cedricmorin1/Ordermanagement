@@ -14,9 +14,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateOrder, onDeleteOrd
   const [newProduct, setNewProduct] = useState({ name: '', quantity: 1, unit: 'kg' });
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const handleSave = () => {
-    onUpdateOrder(order.id, editingOrder);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      await onUpdateOrder(order.id, editingOrder);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
+      alert('Erreur lors de la mise à jour de la commande');
+    }
   };
 
   const handleCancel = () => {
@@ -26,11 +31,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateOrder, onDeleteOrd
     setNewProduct({ name: '', quantity: 1, unit: 'kg' });
   };
 
-  const updateProductProduced = (productId: string, produced: number) => {
-    const updatedProducts = order.products.map(product =>
-      product.id === productId ? { ...product, produced } : product
-    );
-    onUpdateOrder(order.id, { products: updatedProducts });
+  const updateProductProduced = async (productId: string, produced: number) => {
+    try {
+      const updatedProducts = order.products.map(product =>
+        product.id === productId ? { ...product, produced } : product
+      );
+      await onUpdateOrder(order.id, { products: updatedProducts });
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du produit:', error);
+      alert('Erreur lors de la mise à jour du produit');
+    }
   };
 
   const getTotalProgress = () => {
